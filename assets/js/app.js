@@ -1,6 +1,45 @@
+'use strict';
+
+
+const clientId = 'ilyKhNb1I2BQEpesxJuWnQ';
+const clientSecret = 'Tv0AqJmkLdVcQ8IWJecmgK89zywp6DwyZ2XVm4aIVXaJkHbCbeEmLu7BRltky5GJ';
+let authToken = "";
+let results = "";
+
+function getYelpToken() {
+	$.ajax({
+  	  type: "POST",
+	  url: "https://cors-anywhere.herokuapp.com/https://api.yelp.com/oauth2/token",
+	  data: {grant_type: "client_credentials", client_id: clientId, client_secret: clientSecret},
+	  success: storeToken,
+	});
+}
+function storeToken(result) {
+	authToken = authToken ? authToken : result.access_token;
+}
+function makeYelpSearch(result, searchTerm) {
+	$.ajax({
+  	  type: "GET",
+	  url: "https://cors-anywhere.herokuapp.com/https://api.yelp.com/v3/businesses/search?location=nyc&term=" + searchTerm,
+	  headers: {Authorization: "Bearer " + authToken},
+	  success: function(result) {
+	  	setView(result.businesses)
+	  },
+	});
+}
+function setView(businesses) {
+	businesses.forEach( function(biz, index){
+		if (index === 0) {
+			$("#results").html('<a href="' + biz.url + '">' + `<h1>` + biz.name + `</h1>` + '</a>');
+		}else {
+			$("#results").append('<a href="' + biz.url + '">' + `<h1>` + biz.name + `</h1>` + '</a>');
+		}
+	});
+}
+
 function init() {
-	debugger
 	replaceQuestion(myQuestions[0]);
+	getYelpToken();
 }
 function appendAnswers(answers) {
 	var answerHTML = "";
@@ -14,22 +53,21 @@ function appendAnswers(answers) {
 }
 
 function bindEvents(question) {
-	//if it's question 1 redirect user to either replaceQuestion 2 or 3
 	if (myQuestions[0] === question) {
 		$(".oneononetrainer").click(function() {
-			replaceQuestion(myQuestions[1]);
+			replaceQuestion(myQuestions[2]);
 		})	
 
 		$(".classinstructor").click(function() {
-			replaceQuestion(myQuestions[2]);
+			replaceQuestion(myQuestions[1]);
 		})	
 	} else {
 		$('.button').click(function() {
 			var search = $(this)[0].textContent;
-			window.location = "https://www.google.com/maps/search/?api=1&query=" + search;
+			makeYelpSearch(authToken, search)
+			//window.location = "https://www.google.com/maps/search/?api=1&query=" + search;
 		})
 	} 
-	//if it's question 2 or 3 redirect user to API call
 
 	
 }
@@ -44,3 +82,7 @@ function replaceQuestion(question) {
 }
 
 init();
+
+
+
+
